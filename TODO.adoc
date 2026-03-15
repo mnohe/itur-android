@@ -1,0 +1,147 @@
+= Open-Source Publication Checklist
+:toc:
+:toc-placement: preamble
+:icons: font
+
+Tasks to complete before publishing this project as open source.
+The project accompanies the academic work at the Universitat Oberta de Catalunya (UOC).
+
+toc::[]
+
+== P1 — Blockers (must fix before the first commit)
+
+=== Rotate exposed credentials
+
+The `local.properties` file contains real, live secrets.
+Even though it is listed in `.gitignore`, you must rotate them now because:
+
+* They may already exist in IDE history, clipboard managers, or backup tools.
+* Rotating them costs nothing; leaving them costs potential account compromise.
+
+Actions:
+
+* [ ] Revoke and regenerate the MapLibre/Mapbox token
+  (`pk.eyJ1IjoibW5vaGUiLCJhIjoiY…`).
+* [ ] Revoke and regenerate the Google OAuth Web Client ID
+  (`913030919185-7nhme3d5liu37gpt2…`).
+* [ ] Verify the Firebase API key in `app/google-services.json` is restricted
+  to the correct Android package and SHA-1 fingerprint in the Firebase console.
+
+=== [x] Create a `local.properties.example` template
+
+`local.properties.example` created with placeholder values for all required keys.
+
+=== [x] Document the Firebase setup
+
+`app/google-services.json` is gitignored. The README production-build section
+already tells contributors which services to enable (Auth with Google provider,
+Firestore) and where to place the file. Firebase's own documentation covers
+project creation.
+
+=== [x] Verify the `.gitignore` and initialise the repository
+
+`local.properties` and `google-services.json` are correctly excluded.
+Duplicate `local.properties` entry removed from `.gitignore`.
+
+* [ ] Run `git init`, then `git status` to confirm no sensitive files appear
+  in the staged list before the first commit.
+
+=== [x] Choose a licence
+
+GPL-3.0-or-later selected. Spotless headers and README updated.
+
+== P2 — High priority (needed for a usable open-source project)
+
+=== [x] Expand the README
+
+Prerequisites, getting started (demo and prod), build flavours, tech stack,
+module structure, test and formatting commands, licence, and link to the
+academic paper are all present.
+
+=== [x] Add a `CONTRIBUTING.md`
+
+Covers prerequisites, branching and PR workflow, Spotless formatting (with the
+correct `-I spotless/spotless.gradle.kts` flag), running tests, and Conventional
+Commits message format.
+
+=== [x] Add `.gitattributes`
+
+LF normalisation, CRLF for Windows scripts, and binary types for images and
+keystores.
+
+=== [x] Set up a CI pipeline
+
+`.github/workflows/ci.yml` runs spotless check, unit tests, and `demoDebug`
+assembly on every push and PR to `main`. Stub `local.properties` and
+`google-services.json` are generated in the workflow; no secrets required.
+
+=== [x] Add GitHub issue and PR templates
+
+Bug report, feature request, and pull request templates created under `.github/`.
+
+== P3 — Medium priority (quality and completeness)
+
+=== [x] Complete the cloud backup configuration
+
+Allowlist in both `data_extraction_rules.xml` (API 31+) and `backup_rules.xml`
+(pre-API 31): only `files/datastore/user_settings.pb` is backed up.
+Firebase auth shared preferences are excluded implicitly — they contain
+device-specific tokens and Firebase will re-authenticate on restore.
+
+=== [x] Resolve or document in-code FIXMEs
+
+All FIXME comments resolved or converted to TODOs:
+
+* Dropped (not worth the churn): `MapViewModel.kt` location optimisation and
+  LocationComponent investigation; `MapScreen.kt` `ongoingActivityId` question;
+  `FirebaseActivityRepository.kt` serialisation; `FirebaseLocationRepository.kt`
+  throttling; `UserId.kt` format validation.
+* Fixed: `QRImage.kt` — bitmap now uses actual ZXing matrix dimensions to avoid
+  aliasing.
+* Converted to TODO (larger tasks, not blockers): `OngoingState.kt`,
+  `IdleState.kt` FAB encapsulation; `FABs.kt` help overlay;
+  `MapLibreView.kt` user name labels.
+
+=== [x] Increase test coverage
+
+Added unit tests covering:
+
+* `IturActivityExtensionsTest` — `isOrganizer()` extension.
+* `FakeActivityRepositoryTest` — full CRUD: get, list (both filters), create,
+  add/remove participant, update status, delete, request attention.
+* `FakeLocationRepositoryTest` — unknown activity, participant count, stored
+  location within jitter tolerance, remove then re-update.
+* `FakeUserRepositoryTest` — anonymous default, sign-in, sign-out, getAll
+  (subset, empty, unknown IDs).
+* `FakeUserSettingsRepositoryTest` — null default, set, overwrite.
+* `UserIdTest` — blank/whitespace rejection, toString.
+* `IturActivityIdTest` — length validation, alphanumeric check, `from()` URL
+  parsing, toString.
+* `MapViewModelTest` — 19 tests covering init (anonymous user, idle state,
+  ongoingActivityId with/without existing activity), signIn, signOut,
+  startActivity, joinActivity, leaveActivity (organizer and participant),
+  triggerIdleState, and requestAttention.
+
+=== Add an architecture overview document
+
+The modular structure is non-trivial.  Help contributors understand it.
+
+* [ ] Create `docs/architecture.adoc` describing:
+** Module dependency graph.
+** The `prod` vs `demo` flavour split and how fake repositories plug in.
+** The data flow from Firebase → Repository → ViewModel → Compose UI.
+
+== P4 — Low priority (polish)
+
+=== Add a Code of Conduct
+
+* [ ] Add `CODE_OF_CONDUCT.md` (the Contributor Covenant is a common choice).
+
+=== Add a Security Policy
+
+* [ ] Add `SECURITY.md` describing how to report vulnerabilities privately.
+
+=== Address remaining TODO comments in code
+
+* [ ] Review and resolve all remaining `// TODO` comments not listed under P3.
+
